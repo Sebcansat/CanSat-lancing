@@ -1,0 +1,46 @@
+#include <SPI.h>
+#include <Mirf.h>
+#include <nRF24L01.h>
+#include <MirfHardwareSpiDriver.h>
+
+#include <dht11.h>
+#define DHT11PIN 4
+
+int humidity = 0;
+int temperature = 0;
+dht11 DHT11;
+
+void setup()
+{
+    Serial.begin(9600);
+
+    Mirf.cePin = 9;                
+    Mirf.csnPin = 10;       
+    Mirf.spi = &MirfHardwareSpi;
+    Mirf.init();               
+    Mirf.setRADDR((byte *)"Sen01");
+    Mirf.payload = sizeof(unsigned int);
+    Mirf.channel = 3;
+    Mirf.config();
+    Serial.println("I'm Sender...");
+}
+unsigned int adata = 0;
+unsigned int temp = 0;
+void loop()
+{
+  int chk = DHT11.read(DHT11PIN);
+  humidity = DHT11.humidity;
+  temperature = DHT11.temperature;
+  Serial.println(humidity);
+  Serial.println(temperature);
+
+    adata= humidity;
+    temp = temperature;
+    byte data[Mirf.payload];
+    data[0] = adata;    
+    data[1] = temp;            
+    Mirf.setTADDR((byte *)"Rec01");
+    Mirf.send(data);
+    while(Mirf.isSending()) {}
+    delay(2000);
+}
